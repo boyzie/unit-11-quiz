@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Social Work & Digital Technology Quiz</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .quiz-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .quiz-header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .quiz-header h1 {
+            font-size: 2.2em;
+            margin-bottom: 10px;
+        }
+
+        .quiz-header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .progress-bar {
+            background: rgba(255,255,255,0.2);
+            height: 8px;
+            border-radius: 4px;
+            margin-top: 20px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: white;
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .question-container {
+            padding: 40px;
+            display: none;
+        }
+
+        .question-container.active {
+            display: block;
+        }
+
+        .question-number {
+            color: #667eea;
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-bottom: 15px;
+        }
+
+        .question-text {
+            font-size: 1.3em;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            color: #333;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .option {
+            background: #f8f9ff;
+            border: 2px solid #e1e5f7;
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .option:hover {
+            border-color: #667eea;
+            background: #f0f3ff;
+            transform: translateY(-2px);
+        }
+
+        .option.selected {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
+        }
+
+        .option.correct {
+            border-color: #10b981;
+            background: #10b981;
+            color: white;
+        }
+
+        .option.incorrect {
+            border-color: #ef4444;
+            background: #ef4444;
+            color: white;
+        }
+
+        .option-letter {
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .explanation {
+            background: #f0f9ff;
+            border-left: 4px solid #0ea5e9;
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .explanation.show {
+            display: block;
+        }
+
+        .explanation h4 {
+            color: #0ea5e9;
+            margin-bottom: 10px;
+        }
+
+        .quiz-controls {
+            padding: 30px 40px;
+            background: #f8f9fa;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: #6b7280;
+        }
+
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+
+        .results-container {
+            padding: 40px;
+            text-align: center;
+            display: none;
+        }
+
+        .results-container.show {
+            display: block;
+        }
+
+        .score-circle {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 30px;
+            color: white;
+            font-size: 2em;
+            font-weight: bold;
+        }
+
+        .results-text {
+            font-size: 1.3em;
+            margin-bottom: 30px;
+            color: #333;
+        }
+
+        @media (max-width: 768px) {
+            .quiz-container {
+                margin: 10px;
+            }
+            
+            .quiz-header {
+                padding: 20px;
+            }
+            
+            .quiz-header h1 {
+                font-size: 1.8em;
+            }
+            
+            .question-container {
+                padding: 20px;
+            }
+            
+            .quiz-controls {
+                padding: 20px;
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="quiz-container">
+        <div class="quiz-header">
+            <h1>🏛️ Social Work & Digital Technology Quiz</h1>
+            <p>Test your knowledge of digital systems, data protection, and ethical practice</p>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+        </div>
+
+        <!-- Question 1 -->
+        <div class="question-container active" id="question1">
+            <div class="question-number">Question 1 of 4</div>
+            <div class="question-text">
+                Beyond complying with legal frameworks, social work is a values-driven profession that may require social workers to take which specific action regarding digital systems?
+            </div>
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <span class="option-letter">A.</span>
+                    Ensuring that all public body decisions are always automated to increase efficiency.
+                </div>
+                <div class="option" data-answer="B">
+                    <span class="option-letter">B.</span>
+                    Prioritising organisational data security above all else.
+                </div>
+                <div class="option" data-answer="C">
+                    <span class="option-letter">C.</span>
+                    Advocating for people whose rights are affected by technology (e.g., when automated decisions exclude them) and challenging unfair systems when they harm people's rights.
+                </div>
+                <div class="option" data-answer="D">
+                    <span class="option-letter">D.</span>
+                    Ensuring they never record personal information on digital systems to avoid GDPR issues.
+                </div>
+            </div>
+            <div class="explanation" id="explanation1">
+                <h4>✅ Correct Answer: C</h4>
+                <p>Social workers have a duty to challenge unfair systems when they harm people's rights. They may be called to advocate for people whose rights are affected by technology, such as when automated decisions exclude them from services.</p>
+            </div>
+        </div>
+
+        <!-- Question 2 -->
+        <div class="question-container" id="question2">
+            <div class="question-number">Question 2 of 4</div>
+            <div class="question-text">
+                Amira, aged 17, wants to see the case notes recorded about her, but she has been told this information cannot be shared until she is 18. This situation relates to which core data protection guidance, and how should the local authority respond if she submits a subject access request (SAR)?
+            </div>
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <span class="option-letter">A.</span>
+                    The Mental Capacity Act (2005); they must wait until she is 18.
+                </div>
+                <div class="option" data-answer="B">
+                    <span class="option-letter">B.</span>
+                    UK GDPR Guidance (ICO) / Data Protection Act (2018); Amira's right to see her records before turning 18 is a key question that requires the local authority to respond appropriately to her SAR.
+                </div>
+                <div class="option" data-answer="C">
+                    <span class="option-letter">C.</span>
+                    The Regulation of Investigatory Powers Act (2000); they must deny access if they suspect surveillance is required.
+                </div>
+                <div class="option" data-answer="D">
+                    <span class="option-letter">D.</span>
+                    The Human Rights Act (1998); they must immediately delete the data.
+                </div>
+            </div>
+            <div class="explanation" id="explanation2">
+                <h4>✅ Correct Answer: B</h4>
+                <p>The UK GDPR Guidance (ICO) covers individual rights such as subject access requests. A key question for reflection in Amira's case is whether she has the right to see her records before turning 18 and how the local authority should respond if she submits a subject access request.</p>
+            </div>
+        </div>
+
+        <!-- Question 3 -->
+        <div class="question-container" id="question3">
+            <div class="question-number">Question 3 of 4</div>
+            <div class="question-text">
+                The use of Virtual Reality (VR) technology to help people with disabilities "walk through" a potential new home or simulate care options is directly grounded in duties under which piece of legislation?
+            </div>
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <span class="option-letter">A.</span>
+                    The Data Protection Act 2018 (GDPR).
+                </div>
+                <div class="option" data-answer="B">
+                    <span class="option-letter">B.</span>
+                    The Human Rights Act (1998), Article 10 (Freedom of Expression).
+                </div>
+                <div class="option" data-answer="C">
+                    <span class="option-letter">C.</span>
+                    The Mental Capacity Act (2005).
+                </div>
+                <div class="option" data-answer="D">
+                    <span class="option-letter">D.</span>
+                    The Care Act (2014).
+                </div>
+            </div>
+            <div class="explanation" id="explanation3">
+                <h4>✅ Correct Answer: C</h4>
+                <p>This approach is grounded in the Mental Capacity Act 2005, which requires practitioners to maximise an individual's participation in decisions and take all practical steps to help them make their own choices before concluding they lack capacity. Using immersive visual experiences allows people who struggle with abstract explanations to better understand their options and express informed preferences.</p>
+            </div>
+        </div>
+
+        <!-- Question 4 -->
+        <div class="question-container" id="question4">
+            <div class="question-number">Question 4 of 4</div>
+            <div class="question-text">
+                Despite the benefits of VR in capacity assessments, what is a key ethical and legal question social workers must address regarding its use?
+            </div>
+            <div class="options">
+                <div class="option" data-answer="A">
+                    <span class="option-letter">A.</span>
+                    Whether the technology is fast enough to run complex simulations.
+                </div>
+                <div class="option" data-answer="B">
+                    <span class="option-letter">B.</span>
+                    How to ensure that the VR simulation is not designed in a biased way that unintentionally influences or coerces someone's decision, and what safeguards are needed for data privacy.
+                </div>
+                <div class="option" data-answer="C">
+                    <span class="option-letter">C.</span>
+                    If the VR programme has been approved for NHS mental health use.
+                </div>
+                <div class="option" data-answer="D">
+                    <span class="option-letter">D.</span>
+                    If the individual is eligible for Universal Credit.
+                </div>
+            </div>
+            <div class="explanation" id="explanation4">
+                <h4>✅ Correct Answer: B</h4>
+                <p>Critical ethical and legal questions include whether VR could unintentionally influence someone's decision if the simulation is designed in a biased way, and how social workers ensure VR is used to support capacity rather than to persuade or coerce.</p>
+            </div>
+        </div>
+
+        <!-- Results -->
+        <div class="results-container" id="results">
+            <div class="score-circle" id="scoreCircle">
+                <span id="scoreText">0/4</span>
+            </div>
+            <div class="results-text" id="resultsText">
+                Great job completing the quiz!
+            </div>
+            <button class="btn" onclick="restartQuiz()">Take Quiz Again</button>
+        </div>
+
+        <div class="quiz-controls">
+            <button class="btn btn-secondary" id="prevBtn" onclick="previousQuestion()" disabled>Previous</button>
+            <span id="questionIndicator">Question 1 of 4</span>
+            <button class="btn" id="nextBtn" onclick="nextQuestion()" disabled>Next</button>
+        </div>
+    </div>
+
+    <script>
+        let currentQuestion = 1;
+        let totalQuestions = 4;
+        let answers = {};
+        let score = 0;
+        
+        const correctAnswers = {
+            1: 'C',
+            2: 'B', 
+            3: 'C',
+            4: 'B'
+        };
+
+        function updateProgress() {
+            const progress = (currentQuestion - 1) / totalQuestions * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+        }
+
+        function updateControls() {
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const questionIndicator = document.getElementById('questionIndicator');
+            
+            prevBtn.disabled = currentQuestion === 1;
+            
+            if (currentQuestion === totalQuestions) {
+                nextBtn.textContent = 'Finish Quiz';
+                nextBtn.disabled = !answers[currentQuestion];
+            } else {
+                nextBtn.textContent = 'Next';
+                nextBtn.disabled = !answers[currentQuestion];
+            }
+            
+            questionIndicator.textContent = `Question ${currentQuestion} of ${totalQuestions}`;
+        }
+
+        function showQuestion(questionNum) {
+            // Hide all questions
+            document.querySelectorAll('.question-container').forEach(q => {
+                q.classList.remove('active');
+            });
+            
+            // Show current question
+            document.getElementById(`question${questionNum}`).classList.add('active');
+            
+            updateProgress();
+            updateControls();
+        }
+
+        function selectOption(questionNum, selectedAnswer) {
+            const options = document.querySelectorAll(`#question${questionNum} .option`);
+            
+            // Remove previous selections
+            options.forEach(option => {
+                option.classList.remove('selected');
+            });
+            
+            // Add selection to clicked option
+            event.target.closest('.option').classList.add('selected');
+            
+            // Store answer
+            answers[questionNum] = selectedAnswer;
+            
+            // Show explanation immediately
+            const explanation = document.getElementById(`explanation${questionNum}`);
+            explanation.classList.add('show');
+            
+            // Color code the options
+            options.forEach(option => {
+                const answer = option.getAttribute('data-answer');
+                if (answer === correctAnswers[questionNum]) {
+                    option.classList.add('correct');
+                } else if (answer === selectedAnswer && answer !== correctAnswers[questionNum]) {
+                    option.classList.add('incorrect');
+                }
+            });
+            
+            updateControls();
+        }
+
+        function nextQuestion() {
+            if (currentQuestion < totalQuestions) {
+                currentQuestion++;
+                showQuestion(currentQuestion);
+            } else {
+                showResults();
+            }
+        }
+
+        function previousQuestion() {
+            if (currentQuestion > 1) {
+                currentQuestion--;
+                showQuestion(currentQuestion);
+            }
+        }
+
+        function calculateScore() {
+            score = 0;
+            for (let i = 1; i <= totalQuestions; i++) {
+                if (answers[i] === correctAnswers[i]) {
+                    score++;
+                }
+            }
+            return score;
+        }
+
+        function showResults() {
+            const finalScore = calculateScore();
+            const percentage = Math.round((finalScore / totalQuestions) * 100);
+            
+            // Hide quiz content
+            document.querySelectorAll('.question-container').forEach(q => {
+                q.classList.remove('active');
+            });
+            document.querySelector('.quiz-controls').style.display = 'none';
+            
+            // Show results
+            document.getElementById('results').classList.add('show');
+            document.getElementById('scoreText').textContent = `${finalScore}/${totalQuestions}`;
+            
+            let message = '';
+            if (percentage >= 75) {
+                message = `Excellent work! You scored ${percentage}% and demonstrate strong understanding of social work digital ethics and legal frameworks.`;
+                document.getElementById('scoreCircle').style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+            } else if (percentage >= 50) {
+                message = `Good effort! You scored ${percentage}%. Consider reviewing the explanations to strengthen your knowledge.`;
+                document.getElementById('scoreCircle').style.background = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
+            } else {
+                message = `You scored ${percentage}%. This is a complex topic - review the explanations and try again to improve your understanding.`;
+                document.getElementById('scoreCircle').style.background = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
+            }
+            
+            document.getElementById('resultsText').textContent = message;
+            
+            // Update progress to 100%
+            document.getElementById('progressFill').style.width = '100%';
+        }
+
+        function restartQuiz() {
+            currentQuestion = 1;
+            answers = {};
+            score = 0;
+            
+            // Reset all options
+            document.querySelectorAll('.option').forEach(option => {
+                option.classList.remove('selected', 'correct', 'incorrect');
+            });
+            
+            // Hide all explanations
+            document.querySelectorAll('.explanation').forEach(exp => {
+                exp.classList.remove('show');
+            });
+            
+            // Hide results and show quiz
+            document.getElementById('results').classList.remove('show');
+            document.querySelector('.quiz-controls').style.display = 'flex';
+            
+            showQuestion(1);
+        }
+
+        // Add click event listeners to all options
+        document.addEventListener('DOMContentLoaded', function() {
+            for (let i = 1; i <= totalQuestions; i++) {
+                const options = document.querySelectorAll(`#question${i} .option`);
+                options.forEach(option => {
+                    option.addEventListener('click', function() {
+                        const selectedAnswer = this.getAttribute('data-answer');
+                        selectOption(i, selectedAnswer);
+                    });
+                });
+            }
+            
+            updateControls();
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9833f85b64580c6e',t:'MTc1ODU2NjgzOS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
