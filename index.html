@@ -1,566 +1,737 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Social Work & Digital Technology Quiz</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+<div id="dr-army-builder-root" class="dr-app-root">
+  <div style="color:white; padding:1rem; font-family:sans-serif;">
+    If you only see this message and nothing else, JavaScript or the CDNs have not loaded.
+    Try opening this page in a modern browser with an internet connection.
+  </div>
+</div>
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
+<!-- Fonts & Scoped Styles -->
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Lato:wght@400;700&display=swap');
 
-        .quiz-container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            overflow: hidden;
-        }
+  /* Scope everything inside the app so Weebly's theme can't break it */
+  .dr-app-root,
+  .dr-app-root * {
+      box-sizing: border-box;
+  }
 
-        .quiz-header {
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-            color: white;
-            padding: 30px;
-            text-align: center;
-        }
+  .dr-app-root {
+      font-family: 'Lato', sans-serif;
+      background-color: #1a1a1a;
+      color: #e5e5e5;
+      line-height: 1.25;
+  }
+  
+  .dr-app-root h1,
+  .dr-app-root h2,
+  .dr-app-root h3,
+  .dr-app-root .fantasy-font {
+      font-family: 'Cinzel', serif;
+  }
 
-        .quiz-header h1 {
-            font-size: 2.2em;
-            margin-bottom: 10px;
-        }
+  .dr-app-root .stat-box {
+      background-color: #262626;
+      border: 1px solid #404040;
+  }
 
-        .quiz-header p {
-            font-size: 1.1em;
-            opacity: 0.9;
-        }
+  .dr-app-root .parchment {
+      background-color: #f3f0e6;
+      color: #1a1a1a;
+  }
+  
+  /* Custom Scrollbar (only affects inside app on supporting browsers) */
+  .dr-app-root ::-webkit-scrollbar {
+      width: 8px;
+  }
+  .dr-app-root ::-webkit-scrollbar-track {
+      background: #1a1a1a; 
+  }
+  .dr-app-root ::-webkit-scrollbar-thumb {
+      background: #4a4a4a; 
+      border-radius: 4px;
+  }
+  .dr-app-root ::-webkit-scrollbar-thumb:hover {
+      background: #666; 
+  }
 
-        .progress-bar {
-            background: rgba(255,255,255,0.2);
-            height: 8px;
-            border-radius: 4px;
-            margin-top: 20px;
-            overflow: hidden;
-        }
+  @media print {
+      .dr-app-root {
+          background-color: white;
+          color: black;
+      }
+      .dr-app-root .no-print {
+          display: none;
+      }
+      .dr-app-root .card-print {
+          border: 1px solid #ccc;
+          break-inside: avoid;
+          margin-bottom: 1rem;
+          background-color: white;
+          color: black;
+      }
+      .dr-app-root .text-amber-500,
+      .dr-app-root .text-amber-400,
+      .dr-app-root .text-amber-300 {
+          color: #000 !important;
+      }
+      .dr-app-root .bg-stone-900,
+      .dr-app-root .bg-stone-800 {
+          background-color: #fff !important;
+          border: 1px solid #000;
+      }
+      .dr-app-root .text-stone-300,
+      .dr-app-root .text-stone-400,
+      .dr-app-root .text-stone-500 {
+          color: #333 !important;
+      }
+  }
+</style>
 
-        .progress-fill {
-            background: white;
-            height: 100%;
-            border-radius: 4px;
-            transition: width 0.3s ease;
-            width: 0%;
-        }
+<!-- React & ReactDOM -->
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 
-        .question-container {
-            padding: 40px;
-            display: none;
-        }
+<!-- Babel -->
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-        .question-container.active {
-            display: block;
-        }
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com"></script>
 
-        .question-number {
-            color: #667eea;
-            font-weight: bold;
-            font-size: 1.1em;
-            margin-bottom: 15px;
-        }
+<!-- Phosphor Icons -->
+<script src="https://unpkg.com/@phosphor-icons/web"></script>
 
-        .question-text {
-            font-size: 1.3em;
-            line-height: 1.6;
-            margin-bottom: 30px;
-            color: #333;
-        }
+<!-- Main app -->
+<script type="text/babel" data-presets="react">
+  const { useState, useEffect } = React;
 
-        .options {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
+  // --- DATA: Unit Profiles ---
+  const UNIT_TEMPLATES = [
+      { name: "Elite Riders", sp: 6, cost: 6, attackOrder: "5+", attackVal: "3+", shootOrder: "-", shootVal: "-", moveOrder: "7+", moveDist: '10"', armor: 4, defense: "5+", courage: "3+", rules: ["Wild Charge", "Counter-Charge"] },
+      { name: "Heavy Riders", sp: 6, cost: 4, attackOrder: "5+", attackVal: "4+", shootOrder: "-", shootVal: "-", moveOrder: "5+", moveDist: '10"', armor: 3, defense: "5+", courage: "4+", rules: ["Counter-Charge"] },
+      { name: "Light Riders", sp: 6, cost: 4, attackOrder: "7+", attackVal: "5+", shootOrder: "6+", shootVal: "5+ / 12\"", moveOrder: "5+", moveDist: '12"', armor: 3, defense: "6+", courage: "5+", rules: ["Skirmish", "Evade"] },
+      { name: "Greater Warbeasts", sp: 6, cost: 6, attackOrder: "5+", attackVal: "3+", shootOrder: "-", shootVal: "-", moveOrder: "6+", moveDist: '10"', armor: 4, defense: "6+", courage: "3+", rules: ["Ranger", "Wild Charge", "Stomper"] },
+      { name: "Lesser Warbeasts", sp: 6, cost: 4, attackOrder: "5+", attackVal: "4+", shootOrder: "-", shootVal: "-", moveOrder: "6+", moveDist: '12"', armor: 3, defense: "6+", courage: "4+", rules: ["Ranger", "Wild Charge", "Fleet Footed"] },
+      { name: "Elite Foot", sp: 12, cost: 6, attackOrder: "5+", attackVal: "3+", shootOrder: "-", shootVal: "-", moveOrder: "5+", moveDist: '6"', armor: 4, defense: "5+", courage: "3+", rules: ["Wild Charge"] },
+      { name: "Heavy Foot", sp: 12, cost: 4, attackOrder: "6+", attackVal: "4+", shootOrder: "-", shootVal: "-", moveOrder: "5+", moveDist: '6"', armor: 3, defense: "5+", courage: "4+", rules: ["Wall of Spears"] },
+      { name: "Light Foot", sp: 12, cost: 3, attackOrder: "6+", attackVal: "5+", shootOrder: "-", shootVal: "-", moveOrder: "5+", moveDist: '8"', armor: 2, defense: "5+", courage: "4+", rules: ["Offensive", "Wall of Spears"] }, 
+      { name: "Bellicose Foot", sp: 12, cost: 4, attackOrder: "5+", attackVal: "4+", shootOrder: "-", shootVal: "-", moveOrder: "5+", moveDist: '6"', armor: 2, defense: "6+", courage: "3+", rules: ["Wild Charge", "Counter-Charge"] },
+      { name: "Heavy Missiles", sp: 12, cost: 4, attackOrder: "7+", attackVal: "5+", shootOrder: "6+", shootVal: "4+ / 18\"", moveOrder: "6+", moveDist: '6"', armor: 3, defense: "6+", courage: "4+", rules: [] },
+      { name: "Light Missiles", sp: 12, cost: 4, attackOrder: "7+", attackVal: "6+", shootOrder: "6+", shootVal: "5+ / 18\"", moveOrder: "5+", moveDist: '8"', armor: 2, defense: "6+", courage: "4+", rules: ["Skirmish", "Evade"] },
+      { name: "Scouts", sp: 6, cost: 2, attackOrder: "7+", attackVal: "6+", shootOrder: "6+", shootVal: "5+ / 12\"", moveOrder: "5+", moveDist: '8"', armor: 1, defense: "6+", courage: "5+", rules: ["Skirmish", "Evade"] },
+      { name: "Ravenous Hordes", sp: 12, cost: 1, attackOrder: "6+", attackVal: "6+", shootOrder: "-", shootVal: "-", moveOrder: "5+", moveDist: '6"', armor: 1, defense: "6+", courage: "5+", rules: ["Wild Charge"] },
+      { name: "Chariots", sp: 6, cost: 4, attackOrder: "5+", attackVal: "4+", shootOrder: "6+", shootVal: "5+ / 12\"", moveOrder: "5+", moveDist: '8"', armor: 3, defense: "6+", courage: "4+", rules: ["Linear"] },
+      { name: "Beserkers", sp: 6, cost: 4, attackOrder: "5+", attackVal: "3+", shootOrder: "-", shootVal: "-", moveOrder: "6+", moveDist: '8"', armor: 2, defense: "6+", courage: "3+", rules: ["Wild Charge", "Beserk"] }
+  ];
 
-        .option {
-            background: #f8f9ff;
-            border: 2px solid #e1e5f7;
-            border-radius: 12px;
-            padding: 20px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-        }
+  // --- DATA: Fantastical Rules and Upgrades (including Leader traits) ---
+  const UPGRADES_LIST = [
+      // Leader traits (available as upgrades; cost applied to that unit)
+      {
+          name: "Brutal (L)",
+          cost: 1,
+          desc: "Leader trait: Units within 12\" of this Leader may automatically pass a failed Rally test by removing 1 Strength Point."
+      },
+      {
+          name: "Divine Leadership (L)",
+          cost: 2,
+          desc: "Leader trait: This Leader's command or Courage bonus extends to 18\" instead of 12\"."
+      },
+      {
+          name: "Insipid (L)",
+          cost: -1,
+          desc: "Leader trait: Units within 12\" gain no Courage bonus from this Leader. Reduces the unit cost by 1 point."
+      },
+      {
+          name: "Unstoppable March of the Dead (L)",
+          cost: 3,
+          desc: "Leader trait (Undead warbands only): Use only if all units in the warband are Undead."
+      },
+      {
+          name: "Wise Old Owl (L)",
+          cost: 1,
+          desc: "Leader trait: When rolling to decide attacker or defender, you may add or subtract 1 from your final total."
+      },
 
-        .option:hover {
-            border-color: #667eea;
-            background: #f0f3ff;
-            transform: translateY(-2px);
-        }
+      // Standard Fantastical Rules / upgrades
+      { name: "Amphibious", cost: 1, desc: "Treat water as open terrain." },
+      { name: "Armor-Piercing", cost: 1, desc: "-1 to Target Armor." },
+      { name: "Beserk", cost: 1, desc: "+2 Attacks on Charge." },
+      { name: "Blessed Blades*", cost: 4, desc: "Reroll failed hits." },
+      { name: "Brave", cost: 1, desc: "+1 Courage." },
+      { name: "Burrower", cost: 1, desc: "Start off board. Appear 3\" from enemy." },
+      { name: "Chariot", cost: 1, desc: "Upgrade for Heavy Riders. Gain Shoot 6+/5+." },
+      { name: "Cleric", cost: 1, desc: "Heal 1 SP on 5+." },
+      { name: "Cowardly", cost: -1, desc: "Retreat full distance. If flyer, full distance +1D6." },
+      { name: "Cunning", cost: 1, desc: "Reroll failed Move or Attack once per turn." },
+      { name: "Cursed", cost: -1, desc: "When this unit is hit, add 1 additional hit." },
+      { name: "Enchanted Weapons", cost: 1, desc: "+1 to Hit in Melee." },
+      { name: "Fear", cost: 1, desc: "Enemy suffers -1 Courage." },
+      { name: "Fearful", cost: -1, desc: "Courage tests -1. -2 if enemy is Fearsome. Cannot mix with Fearsome or Undead." },
+      { name: "Fleet Footed", cost: 1, desc: "Move +2\"." },
+      { name: "Flying", cost: 2, desc: "Ignore terrain and units when moving." },
+      { name: "Hatred", cost: 1, desc: "Reroll misses vs a specific enemy." },
+      { name: "Heavy Missiles", cost: 1, desc: "Range 18\"." },
+      { name: "Holy", cost: 1, desc: "Immune to Fear and Terror." },
+      { name: "Hunter", cost: 1, desc: "No terrain penalty when shooting." },
+      { name: "Invisibility", cost: 2, desc: "Cannot be shot at over 12\"." },
+      { name: "Magic Missiles", cost: 3, desc: "+2 dice when Shooting." },
+      { name: "Mystical Armor", cost: 2, desc: "Roll 6+ to ignore SP loss." },
+      { name: "Offensive", cost: 1, desc: "+2 Attack Dice." },
+      { name: "Pikes", cost: 1, desc: "No bonus for mounted charging this unit." },
+      { name: "Poison", cost: 2, desc: "Hits on 6s count as 2." },
+      { name: "Ponderous", cost: 1, desc: "Cannot run or charge." },
+      { name: "Ranger", cost: 1, desc: "Move through rough terrain without penalty." },
+      { name: "Regeneration", cost: 3, desc: "Instead of Move, heal 1 SP." },
+      { name: "Scary", cost: 1, desc: "-1 Courage to enemy in melee." },
+      { name: "Sharpshooter", cost: 2, desc: "+1 to Hit when Shooting." },
+      { name: "Shieldwall", cost: 1, desc: "+1 Armor vs Shooting." },
+      { name: "Short Range Missiles", cost: 1, desc: "Range 12\"." },
+      { name: "Single Entity", cost: 0, desc: "If SP is 12, reduce to 6 and gain +1 Armor." },
+      { name: "Skirmisher", cost: 1, desc: "+1 Armor vs Shooting and Casters." },
+      { name: "Slow", cost: -1, desc: "Movement -2\"." },
+      { name: "Spellcaster Lv1", cost: 1, desc: "Spellcaster Level 1: one school." },
+      { name: "Spellcaster Lv2", cost: 2, desc: "Spellcaster Level 2: two schools." },
+      { name: "Spellcaster Lv3", cost: 3, desc: "Spellcaster Level 3: three schools." },
+      { name: "Stout", cost: 1, desc: "Ignore first hit each turn." },
+      { name: "Summoner", cost: 3, desc: "May summon units." },
+      { name: "Terrific", cost: 2, desc: "Enemy suffers -2 Courage." },
+      { name: "Undead", cost: 1, desc: "Never test Courage. Crumble instead." },
+      { name: "Venemous", cost: 3, desc: "Any Attack roll of 6 counts as two hits." },
+      { name: "Wall of Spears", cost: 1, desc: "Strike first when charged." },
+      { name: "Weak", cost: -1, desc: "Subtract 1 from total hits inflicted." },
+      { name: "Weighty Projectiles", cost: 1, desc: "-1 Armor to the target." },
+      { name: "Well Led", cost: 1, desc: "Leadership bubble +1." },
+      { name: "Were-Creature", cost: 2, desc: "Change stats mid game." },
+      { name: "Wild", cost: -1, desc: "Must test to Move. If failed, charge nearest unit." },
+      { name: "18/100 Strength*", cost: 4, desc: "Reroll 3 failed dice." }
+  ].sort((a, b) => a.name.localeCompare(b.name));
 
-        .option.selected {
-            border-color: #667eea;
-            background: #667eea;
-            color: white;
-        }
+  const LEADER_UPGRADE_SUFFIX = "(L)";
+  const UNSTOPPABLE_NAME = "Unstoppable March of the Dead (L)";
 
-        .option.correct {
-            border-color: #10b981;
-            background: #10b981;
-            color: white;
-        }
+  // Icon wrapper
+  const Icon = ({ name, size = 20, className = "" }) => {
+      return <i className={`ph ph-${name} ${className}`} style={{ fontSize: size }}></i>;
+  };
 
-        .option.incorrect {
-            border-color: #ef4444;
-            background: #ef4444;
-            color: white;
-        }
+  const UnitCard = ({ unit, onUpdate, onDelete, onDuplicate, onSetLeader }) => {
+      const handleNameChange = (e) => {
+          onUpdate(unit.id, { ...unit, customName: e.target.value });
+      };
 
-        .option-letter {
-            font-weight: bold;
-            margin-right: 10px;
-        }
+      const addUpgrade = (e) => {
+          const upgradeName = e.target.value;
+          if (!upgradeName) return;
+          
+          const upgradeObj = UPGRADES_LIST.find(u => u.name === upgradeName);
+          const currentUpgrades = unit.selectedUpgrades || [];
+          if (!currentUpgrades.some(u => u.name === upgradeName)) {
+              onUpdate(unit.id, { 
+                  ...unit, 
+                  selectedUpgrades: [...currentUpgrades, upgradeObj] 
+              });
+          }
+          e.target.value = "";
+      };
 
-        .explanation {
-            background: #f0f9ff;
-            border-left: 4px solid #0ea5e9;
-            padding: 20px;
-            margin-top: 20px;
-            border-radius: 8px;
-            display: none;
-        }
+      const removeUpgrade = (upgradeName) => {
+          onUpdate(unit.id, {
+              ...unit,
+              selectedUpgrades: (unit.selectedUpgrades || []).filter(u => u.name !== upgradeName)
+          });
+      };
 
-        .explanation.show {
-            display: block;
-        }
+      const totalCost = Math.max(
+          0,
+          unit.cost + (unit.selectedUpgrades || []).reduce((sum, u) => sum + u.cost, 0)
+      );
 
-        .explanation h4 {
-            color: #0ea5e9;
-            margin-bottom: 10px;
-        }
+      const cardClasses =
+          "border rounded-lg p-4 mb-4 shadow-lg card-print relative " +
+          (unit.isLeader
+              ? "bg-stone-900 border-amber-500 ring-1 ring-amber-500/60"
+              : "bg-stone-900 border-stone-700");
 
-        .quiz-controls {
-            padding: 30px 40px;
-            background: #f8f9fa;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+      const hasLeaderUpgradeOnNonLeader =
+          !unit.isLeader &&
+          (unit.selectedUpgrades || []).some(up => up.name.indexOf(LEADER_UPGRADE_SUFFIX) !== -1);
 
-        .btn {
-            background: #667eea;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-size: 1em;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
+      return (
+          <div className={cardClasses}>
+              <div className="flex justify-between items-start mb-3">
+                  <div className="w-full mr-4">
+                      <div className="flex items-center gap-2 mb-1">
+                          <input 
+                              type="text" 
+                              placeholder="Unit Name"
+                              value={unit.customName}
+                              onChange={handleNameChange}
+                              className="w-full bg-transparent text-xl font-bold text-amber-500 border-b border-stone-700 focus:border-amber-500 outline-none pb-1 placeholder-stone-600 fantasy-font"
+                          />
+                      </div>
+                      <div className="text-stone-400 text-sm mt-1 flex items-center gap-2">
+                          <span className="font-semibold text-stone-300">{unit.name}</span>
+                          <span className="text-xs bg-stone-800 px-2 py-0.5 rounded text-stone-500">SP: {unit.sp}</span>
+                      </div>
+                  </div>
+                  <div className="flex flex-col items-end gap-1">
+                      <div className="flex items-center gap-2 no-print">
+                          <label className="flex items-center gap-1 text-xs text-amber-300 cursor-pointer select-none">
+                              <input
+                                  type="checkbox"
+                                  checked={!!unit.isLeader}
+                                  onChange={() => onSetLeader(unit.id)}
+                                  className="accent-amber-400"
+                              />
+                              <Icon name="crown" size={16} />
+                              <span>Leader</span>
+                          </label>
+                      </div>
+                      <div className="text-2xl font-bold text-amber-400 fantasy-font whitespace-nowrap">
+                          {totalCost} pts
+                      </div>
+                      <div className="flex gap-1 mt-1 no-print">
+                          <button onClick={() => onDuplicate(unit)} className="p-1.5 text-stone-400 hover:text-blue-400 transition-colors" title="Duplicate">
+                              <Icon name="copy" />
+                          </button>
+                          <button onClick={() => onDelete(unit.id)} className="p-1.5 text-stone-400 hover:text-red-500 transition-colors" title="Delete">
+                              <Icon name="trash" />
+                          </button>
+                      </div>
+                  </div>
+              </div>
 
-        .btn:hover {
-            background: #5a67d8;
-            transform: translateY(-2px);
-        }
+              {/* Stats Grid */}
+              <div className="grid grid-cols-6 gap-1 mb-4 text-center text-sm">
+                  <div className="stat-box p-1 rounded">
+                      <div className="text-xs text-stone-500 uppercase">Att</div>
+                      <div className="font-bold text-stone-200">{unit.attackOrder}/{unit.attackVal}</div>
+                  </div>
+                  <div className="stat-box p-1 rounded">
+                      <div className="text-xs text-stone-500 uppercase">Sht</div>
+                      <div className="font-bold text-stone-200">{unit.shootOrder}/{unit.shootVal}</div>
+                  </div>
+                  <div className="stat-box p-1 rounded">
+                      <div className="text-xs text-stone-500 uppercase">Mov</div>
+                      <div className="font-bold text-stone-200">{unit.moveOrder}/{unit.moveDist}</div>
+                  </div>
+                  <div className="stat-box p-1 rounded">
+                      <div className="text-xs text-stone-500 uppercase">Arm</div>
+                      <div className="font-bold text-stone-200">{unit.armor}</div>
+                  </div>
+                  <div className="stat-box p-1 rounded">
+                      <div className="text-xs text-stone-500 uppercase">Def</div>
+                      <div className="font-bold text-stone-200">{unit.defense}</div>
+                  </div>
+                  <div className="stat-box p-1 rounded">
+                      <div className="text-xs text-stone-500 uppercase">Cour</div>
+                      <div className="font-bold text-stone-200">{unit.courage}</div>
+                  </div>
+              </div>
 
-        .btn:disabled {
-            background: #cbd5e0;
-            cursor: not-allowed;
-            transform: none;
-        }
+              {/* Rules & Upgrades */}
+              <div className="space-y-2">
+                  {/* Default Rules */}
+                  {unit.rules.length > 0 && (
+                      <div className="text-sm text-stone-400">
+                          <span className="font-semibold text-stone-500">Traits: </span>
+                          {unit.rules.join(", ")}
+                      </div>
+                  )}
 
-        .btn-secondary {
-            background: #6b7280;
-        }
+                  {/* Selected Upgrades */}
+                  <div className="space-y-1">
+                      {(unit.selectedUpgrades || []).map((upgrade, idx) => {
+                          const isLeaderUpgrade = upgrade.name.indexOf(LEADER_UPGRADE_SUFFIX) !== -1;
+                          const leaderStyle =
+                              isLeaderUpgrade && unit.isLeader
+                                  ? "border-amber-500/70 bg-amber-950/40"
+                                  : isLeaderUpgrade && !unit.isLeader
+                                  ? "border-red-700/70 bg-red-950/30"
+                                  : "border-stone-700 bg-stone-800";
 
-        .btn-secondary:hover {
-            background: #4b5563;
-        }
+                          return (
+                              <div
+                                  key={idx}
+                                  className={`flex justify-between items-start text-sm p-2 rounded border ${leaderStyle}`}
+                              >
+                                  <div>
+                                      <span className="font-semibold">
+                                          <span className={isLeaderUpgrade ? (unit.isLeader ? "text-amber-300" : "text-red-300") : "text-amber-500"}>
+                                              {upgrade.name}
+                                          </span>
+                                      </span>
+                                      <span className="text-stone-500 text-xs ml-1">
+                                          ({upgrade.cost > 0 ? "+" : ""}{upgrade.cost} pts)
+                                      </span>
+                                      <div className="text-xs text-stone-300 italic mt-0.5">
+                                          {upgrade.desc}
+                                      </div>
+                                      {isLeaderUpgrade && !unit.isLeader && (
+                                          <div className="text-[10px] text-red-300 mt-0.5">
+                                              Leader trait is on a non-Leader unit.
+                                          </div>
+                                      )}
+                                  </div>
+                                  <button 
+                                      onClick={() => removeUpgrade(upgrade.name)}
+                                      className="text-stone-500 hover:text-red-400 ml-2 no-print"
+                                  >
+                                      <Icon name="x" size={14} />
+                                  </button>
+                              </div>
+                          );
+                      })}
+                  </div>
 
-        .results-container {
-            padding: 40px;
-            text-align: center;
-            display: none;
-        }
+                  {/* Upgrade Selector */}
+                  <div className="mt-3 no-print">
+                      <select 
+                          className="w-full bg-stone-800 text-stone-300 text-sm border border-stone-600 rounded p-2 focus:border-amber-500 outline-none"
+                          onChange={addUpgrade}
+                          defaultValue=""
+                      >
+                          <option value="" disabled>+ Add Fantastical Rule / Upgrade</option>
+                          {UPGRADES_LIST.map(u => (
+                              <option
+                                  key={u.name}
+                                  value={u.name}
+                                  disabled={(unit.selectedUpgrades || []).some(sel => sel.name === u.name)}
+                              >
+                                  {u.name} ({u.cost > 0 ? '+' : ''}{u.cost})
+                              </option>
+                          ))}
+                      </select>
+                  </div>
 
-        .results-container.show {
-            display: block;
-        }
+                  {hasLeaderUpgradeOnNonLeader && (
+                      <div className="mt-2 text-[11px] text-red-300 no-print">
+                          This unit has Leader traits but is not marked as the warband Leader.
+                      </div>
+                  )}
 
-        .score-circle {
-            width: 150px;
-            height: 150px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 30px;
-            color: white;
-            font-size: 2em;
-            font-weight: bold;
-        }
+                  {unit.isLeader && (
+                      <div className="mt-2 text-[11px] text-amber-300 uppercase tracking-wide no-print">
+                          <Icon name="crown" size={12} className="inline mr-1" />
+                          Warband Leader
+                      </div>
+                  )}
+              </div>
+          </div>
+      );
+  };
 
-        .results-text {
-            font-size: 1.3em;
-            margin-bottom: 30px;
-            color: #333;
-        }
+  const App = () => {
+      const [army, setArmy] = useState(() => {
+          try {
+              const saved = localStorage.getItem('dr_army_v1');
+              return saved ? JSON.parse(saved) : [];
+          } catch {
+              return [];
+          }
+      });
 
-        @media (max-width: 768px) {
-            .quiz-container {
-                margin: 10px;
-            }
-            
-            .quiz-header {
-                padding: 20px;
-            }
-            
-            .quiz-header h1 {
-                font-size: 1.8em;
-            }
-            
-            .question-container {
-                padding: 20px;
-            }
-            
-            .quiz-controls {
-                padding: 20px;
-                flex-direction: column;
-                gap: 15px;
-            }
-        }
-    </style>
-</head>
-<body>
-    <div class="quiz-container">
-        <div class="quiz-header">
-            <h1>🏛️ Social Work & Digital Technology Quiz</h1>
-            <p>Test your knowledge of digital systems, data protection, and ethical practice</p>
-            <div class="progress-bar">
-                <div class="progress-fill" id="progressFill"></div>
-            </div>
-        </div>
+      const [armyName, setArmyName] = useState(() => {
+          return localStorage.getItem('dr_army_name') || "My Warband";
+      });
 
-        <!-- Question 1 -->
-        <div class="question-container active" id="question1">
-            <div class="question-number">Question 1 of 4</div>
-            <div class="question-text">
-                Beyond complying with legal frameworks, social work is a values-driven profession that may require social workers to take which specific action regarding digital systems?
-            </div>
-            <div class="options">
-                <div class="option" data-answer="A">
-                    <span class="option-letter">A.</span>
-                    Ensuring that all public body decisions are always automated to increase efficiency.
-                </div>
-                <div class="option" data-answer="B">
-                    <span class="option-letter">B.</span>
-                    Prioritising organisational data security above all else.
-                </div>
-                <div class="option" data-answer="C">
-                    <span class="option-letter">C.</span>
-                    Advocating for people whose rights are affected by technology (e.g., when automated decisions exclude them) and challenging unfair systems when they harm people's rights.
-                </div>
-                <div class="option" data-answer="D">
-                    <span class="option-letter">D.</span>
-                    Ensuring they never record personal information on digital systems to avoid GDPR issues.
-                </div>
-            </div>
-            <div class="explanation" id="explanation1">
-                <h4>✅ Correct Answer: C</h4>
-                <p>Social workers have a duty to challenge unfair systems when they harm people's rights. They may be called to advocate for people whose rights are affected by technology, such as when automated decisions exclude them from services.</p>
-            </div>
-        </div>
+      const [jsonText, setJsonText] = useState("");
 
-        <!-- Question 2 -->
-        <div class="question-container" id="question2">
-            <div class="question-number">Question 2 of 4</div>
-            <div class="question-text">
-                Amira, aged 17, wants to see the case notes recorded about her, but she has been told this information cannot be shared until she is 18. This situation relates to which core data protection guidance, and how should the local authority respond if she submits a subject access request (SAR)?
-            </div>
-            <div class="options">
-                <div class="option" data-answer="A">
-                    <span class="option-letter">A.</span>
-                    The Mental Capacity Act (2005); they must wait until she is 18.
-                </div>
-                <div class="option" data-answer="B">
-                    <span class="option-letter">B.</span>
-                    UK GDPR Guidance (ICO) / Data Protection Act (2018); Amira's right to see her records before turning 18 is a key question that requires the local authority to respond appropriately to her SAR.
-                </div>
-                <div class="option" data-answer="C">
-                    <span class="option-letter">C.</span>
-                    The Regulation of Investigatory Powers Act (2000); they must deny access if they suspect surveillance is required.
-                </div>
-                <div class="option" data-answer="D">
-                    <span class="option-letter">D.</span>
-                    The Human Rights Act (1998); they must immediately delete the data.
-                </div>
-            </div>
-            <div class="explanation" id="explanation2">
-                <h4>✅ Correct Answer: B</h4>
-                <p>The UK GDPR Guidance (ICO) covers individual rights such as subject access requests. A key question for reflection in Amira's case is whether she has the right to see her records before turning 18 and how the local authority should respond if she submits a subject access request.</p>
-            </div>
-        </div>
+      useEffect(() => {
+          localStorage.setItem('dr_army_v1', JSON.stringify(army));
+      }, [army]);
 
-        <!-- Question 3 -->
-        <div class="question-container" id="question3">
-            <div class="question-number">Question 3 of 4</div>
-            <div class="question-text">
-                The use of Virtual Reality (VR) technology to help people with disabilities "walk through" a potential new home or simulate care options is directly grounded in duties under which piece of legislation?
-            </div>
-            <div class="options">
-                <div class="option" data-answer="A">
-                    <span class="option-letter">A.</span>
-                    The Data Protection Act 2018 (GDPR).
-                </div>
-                <div class="option" data-answer="B">
-                    <span class="option-letter">B.</span>
-                    The Human Rights Act (1998), Article 10 (Freedom of Expression).
-                </div>
-                <div class="option" data-answer="C">
-                    <span class="option-letter">C.</span>
-                    The Mental Capacity Act (2005).
-                </div>
-                <div class="option" data-answer="D">
-                    <span class="option-letter">D.</span>
-                    The Care Act (2014).
-                </div>
-            </div>
-            <div class="explanation" id="explanation3">
-                <h4>✅ Correct Answer: C</h4>
-                <p>This approach is grounded in the Mental Capacity Act 2005, which requires practitioners to maximise an individual's participation in decisions and take all practical steps to help them make their own choices before concluding they lack capacity. Using immersive visual experiences allows people who struggle with abstract explanations to better understand their options and express informed preferences.</p>
-            </div>
-        </div>
+      useEffect(() => {
+          localStorage.setItem('dr_army_name', armyName);
+      }, [armyName]);
 
-        <!-- Question 4 -->
-        <div class="question-container" id="question4">
-            <div class="question-number">Question 4 of 4</div>
-            <div class="question-text">
-                Despite the benefits of VR in capacity assessments, what is a key ethical and legal question social workers must address regarding its use?
-            </div>
-            <div class="options">
-                <div class="option" data-answer="A">
-                    <span class="option-letter">A.</span>
-                    Whether the technology is fast enough to run complex simulations.
-                </div>
-                <div class="option" data-answer="B">
-                    <span class="option-letter">B.</span>
-                    How to ensure that the VR simulation is not designed in a biased way that unintentionally influences or coerces someone's decision, and what safeguards are needed for data privacy.
-                </div>
-                <div class="option" data-answer="C">
-                    <span class="option-letter">C.</span>
-                    If the VR programme has been approved for NHS mental health use.
-                </div>
-                <div class="option" data-answer="D">
-                    <span class="option-letter">D.</span>
-                    If the individual is eligible for Universal Credit.
-                </div>
-            </div>
-            <div class="explanation" id="explanation4">
-                <h4>✅ Correct Answer: B</h4>
-                <p>Critical ethical and legal questions include whether VR could unintentionally influence someone's decision if the simulation is designed in a biased way, and how social workers ensure VR is used to support capacity rather than to persuade or coerce.</p>
-            </div>
-        </div>
+      const addUnit = (templateName) => {
+          const template = UNIT_TEMPLATES.find(t => t.name === templateName);
+          if (!template) return;
 
-        <!-- Results -->
-        <div class="results-container" id="results">
-            <div class="score-circle" id="scoreCircle">
-                <span id="scoreText">0/4</span>
-            </div>
-            <div class="results-text" id="resultsText">
-                Great job completing the quiz!
-            </div>
-            <button class="btn" onclick="restartQuiz()">Take Quiz Again</button>
-        </div>
+          const newUnit = {
+              ...template,
+              id: Date.now() + Math.random(),
+              customName: "",
+              selectedUpgrades: [],
+              isLeader: false
+          };
+          setArmy(prev => [...prev, newUnit]);
+      };
 
-        <div class="quiz-controls">
-            <button class="btn btn-secondary" id="prevBtn" onclick="previousQuestion()" disabled>Previous</button>
-            <span id="questionIndicator">Question 1 of 4</span>
-            <button class="btn" id="nextBtn" onclick="nextQuestion()" disabled>Next</button>
-        </div>
-    </div>
+      const updateUnit = (id, updatedUnit) => {
+          setArmy(prev => prev.map(u => (u.id === id ? updatedUnit : u)));
+      };
 
-    <script>
-        let currentQuestion = 1;
-        let totalQuestions = 4;
-        let answers = {};
-        let score = 0;
-        
-        const correctAnswers = {
-            1: 'C',
-            2: 'B', 
-            3: 'C',
-            4: 'B'
-        };
+      const deleteUnit = (id) => {
+          setArmy(prev => prev.filter(u => u.id !== id));
+      };
 
-        function updateProgress() {
-            const progress = (currentQuestion - 1) / totalQuestions * 100;
-            document.getElementById('progressFill').style.width = progress + '%';
-        }
+      const duplicateUnit = (unit) => {
+          const cloned = {
+              ...unit,
+              id: Date.now() + Math.random(),
+              customName: unit.customName ? `${unit.customName} (copy)` : "",
+              isLeader: false
+          };
+          setArmy(prev => [...prev, cloned]);
+      };
 
-        function updateControls() {
-            const prevBtn = document.getElementById('prevBtn');
-            const nextBtn = document.getElementById('nextBtn');
-            const questionIndicator = document.getElementById('questionIndicator');
-            
-            prevBtn.disabled = currentQuestion === 1;
-            
-            if (currentQuestion === totalQuestions) {
-                nextBtn.textContent = 'Finish Quiz';
-                nextBtn.disabled = !answers[currentQuestion];
-            } else {
-                nextBtn.textContent = 'Next';
-                nextBtn.disabled = !answers[currentQuestion];
-            }
-            
-            questionIndicator.textContent = `Question ${currentQuestion} of ${totalQuestions}`;
-        }
+      const clearArmy = () => {
+          if (army.length === 0) return;
+          if (window.confirm("Clear all units from this warband?")) {
+              setArmy([]);
+          }
+      };
 
-        function showQuestion(questionNum) {
-            // Hide all questions
-            document.querySelectorAll('.question-container').forEach(q => {
-                q.classList.remove('active');
-            });
-            
-            // Show current question
-            document.getElementById(`question${questionNum}`).classList.add('active');
-            
-            updateProgress();
-            updateControls();
-        }
+      const setLeader = (id) => {
+          setArmy(prev => {
+              const clicked = prev.find(u => u.id === id);
+              const willBeLeader = clicked ? !clicked.isLeader : true;
+              return prev.map(u => ({
+                  ...u,
+                  isLeader: willBeLeader ? u.id === id : false
+              }));
+          });
+      };
 
-        function selectOption(questionNum, selectedAnswer) {
-            const options = document.querySelectorAll(`#question${questionNum} .option`);
-            
-            // Remove previous selections
-            options.forEach(option => {
-                option.classList.remove('selected');
-            });
-            
-            // Add selection to clicked option
-            event.target.closest('.option').classList.add('selected');
-            
-            // Store answer
-            answers[questionNum] = selectedAnswer;
-            
-            // Show explanation immediately
-            const explanation = document.getElementById(`explanation${questionNum}`);
-            explanation.classList.add('show');
-            
-            // Color code the options
-            options.forEach(option => {
-                const answer = option.getAttribute('data-answer');
-                if (answer === correctAnswers[questionNum]) {
-                    option.classList.add('correct');
-                } else if (answer === selectedAnswer && answer !== correctAnswers[questionNum]) {
-                    option.classList.add('incorrect');
-                }
-            });
-            
-            updateControls();
-        }
+      const totalPoints = army.reduce((sum, unit) => {
+          const unitCost = Math.max(
+              0,
+              unit.cost + (unit.selectedUpgrades || []).reduce((s, u) => s + u.cost, 0)
+          );
+          return sum + unitCost;
+      }, 0);
 
-        function nextQuestion() {
-            if (currentQuestion < totalQuestions) {
-                currentQuestion++;
-                showQuestion(currentQuestion);
-            } else {
-                showResults();
-            }
-        }
+      const isUnitUndead = (unit) => {
+          const baseIsUndead = (unit.rules || []).indexOf("Undead") !== -1;
+          const upgradeIsUndead = (unit.selectedUpgrades || []).some(u => u.name === "Undead");
+          return baseIsUndead || upgradeIsUndead;
+      };
 
-        function previousQuestion() {
-            if (currentQuestion > 1) {
-                currentQuestion--;
-                showQuestion(currentQuestion);
-            }
-        }
+      const hasUnstoppable = army.some(
+          unit => (unit.selectedUpgrades || []).some(up => up.name === UNSTOPPABLE_NAME)
+      );
+      const allUndead = army.length > 0 && army.every(isUnitUndead);
 
-        function calculateScore() {
-            score = 0;
-            for (let i = 1; i <= totalQuestions; i++) {
-                if (answers[i] === correctAnswers[i]) {
-                    score++;
-                }
-            }
-            return score;
-        }
+      const anyLeaderTraitsOnNonLeader = army.some(
+          unit =>
+              !unit.isLeader &&
+              (unit.selectedUpgrades || []).some(up => up.name.indexOf(LEADER_UPGRADE_SUFFIX) !== -1)
+      );
 
-        function showResults() {
-            const finalScore = calculateScore();
-            const percentage = Math.round((finalScore / totalQuestions) * 100);
-            
-            // Hide quiz content
-            document.querySelectorAll('.question-container').forEach(q => {
-                q.classList.remove('active');
-            });
-            document.querySelector('.quiz-controls').style.display = 'none';
-            
-            // Show results
-            document.getElementById('results').classList.add('show');
-            document.getElementById('scoreText').textContent = `${finalScore}/${totalQuestions}`;
-            
-            let message = '';
-            if (percentage >= 75) {
-                message = `Excellent work! You scored ${percentage}% and demonstrate strong understanding of social work digital ethics and legal frameworks.`;
-                document.getElementById('scoreCircle').style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
-            } else if (percentage >= 50) {
-                message = `Good effort! You scored ${percentage}%. Consider reviewing the explanations to strengthen your knowledge.`;
-                document.getElementById('scoreCircle').style.background = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
-            } else {
-                message = `You scored ${percentage}%. This is a complex topic - review the explanations and try again to improve your understanding.`;
-                document.getElementById('scoreCircle').style.background = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
-            }
-            
-            document.getElementById('resultsText').textContent = message;
-            
-            // Update progress to 100%
-            document.getElementById('progressFill').style.width = '100%';
-        }
+      const handleExportJson = () => {
+          const data = {
+              armyName,
+              army,
+              version: 1,
+              exportedAt: new Date().toISOString()
+          };
+          const pretty = JSON.stringify(data, null, 2);
+          setJsonText(pretty);
+      };
 
-        function restartQuiz() {
-            currentQuestion = 1;
-            answers = {};
-            score = 0;
-            
-            // Reset all options
-            document.querySelectorAll('.option').forEach(option => {
-                option.classList.remove('selected', 'correct', 'incorrect');
-            });
-            
-            // Hide all explanations
-            document.querySelectorAll('.explanation').forEach(exp => {
-                exp.classList.remove('show');
-            });
-            
-            // Hide results and show quiz
-            document.getElementById('results').classList.remove('show');
-            document.querySelector('.quiz-controls').style.display = 'flex';
-            
-            showQuestion(1);
-        }
+      const handleImportJson = () => {
+          try {
+              const parsed = JSON.parse(jsonText);
+              const importedArmyRaw = parsed.army || [];
+              const importedName = parsed.armyName || "Imported Warband";
 
-        // Add click event listeners to all options
-        document.addEventListener('DOMContentLoaded', function() {
-            for (let i = 1; i <= totalQuestions; i++) {
-                const options = document.querySelectorAll(`#question${i} .option`);
-                options.forEach(option => {
-                    option.addEventListener('click', function() {
-                        const selectedAnswer = this.getAttribute('data-answer');
-                        selectOption(i, selectedAnswer);
-                    });
-                });
-            }
-            
-            updateControls();
-        });
-    </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9833f85b64580c6e',t:'MTc1ODU2NjgzOS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
-</html>
+              const normalizedArmy = importedArmyRaw.map((unit, idx) => ({
+                  ...unit,
+                  id: unit.id || (Date.now() + Math.random() + idx),
+                  selectedUpgrades: unit.selectedUpgrades || [],
+                  isLeader: !!unit.isLeader,
+                  rules: unit.rules || []
+              }));
+
+              setArmy(normalizedArmy);
+              setArmyName(importedName);
+              window.alert("Army imported successfully.");
+          } catch (err) {
+              console.error(err);
+              window.alert("Import failed. Please check the JSON is valid and try again.");
+          }
+      };
+
+      return (
+          <div className="min-h-screen bg-neutral-900 text-stone-100">
+              <header className="no-print border-b border-stone-800 bg-black/80 backdrop-blur sticky top-0 z-20">
+                  <div className="max-w-6xl mx-auto px-4 py-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                      <div className="flex items-center gap-3">
+                          <Icon name="sword" size={28} className="text-amber-400" />
+                          <div>
+                              <h1 className="text-xl md:text-2xl font-bold fantasy-font tracking-wide">
+                                  Dragon Rampant Army Builder
+                              </h1>
+                              <p className="text-xs text-stone-400">
+                                  Lists are saved locally in this browser (and you can export/import JSON below).
+                              </p>
+                          </div>
+                      </div>
+                      <div className="flex flex-col items-end gap-2">
+                          <input
+                              type="text"
+                              value={armyName}
+                              onChange={(e) => setArmyName(e.target.value)}
+                              className="bg-stone-900 border border-stone-700 rounded px-3 py-1 text-sm focus:outline-none focus:border-amber-500 w-full md:w-64"
+                              placeholder="Warband name"
+                          />
+                          <div className="flex flex-wrap items-center gap-2 text-xs md:text-sm text-stone-300">
+                              <span>
+                                  <Icon name="users" size={16} className="inline mr-1" />
+                                  {army.length} units
+                              </span>
+                              <span>
+                                  <Icon name="coins" size={16} className="inline mr-1 text-amber-300" />
+                                  {totalPoints} pts
+                              </span>
+                              <button
+                                  onClick={() => window.print()}
+                                  className="inline-flex items-center gap-1 px-3 py-1 rounded bg-stone-800 hover:bg-stone-700 text-xs font-semibold"
+                              >
+                                  <Icon name="printer" size={14} />
+                                  Print
+                              </button>
+                              {army.length > 0 && (
+                                  <button
+                                      onClick={clearArmy}
+                                      className="inline-flex items-center gap-1 px-3 py-1 rounded border border-red-700 text-red-400 hover:bg-red-900/30 text-xs"
+                                  >
+                                      <Icon name="trash" size={14} />
+                                      Clear
+                                  </button>
+                              )}
+                          </div>
+                      </div>
+                  </div>
+
+                  {/* Global warnings */}
+                  {(hasUnstoppable && !allUndead) || anyLeaderTraitsOnNonLeader ? (
+                      <div className="max-w-6xl mx-auto px-4 pb-3 space-y-1 text-xs no-print">
+                          {hasUnstoppable && !allUndead && (
+                              <div className="flex items-start gap-2 text-red-300">
+                                  <Icon name="warning-circle" size={14} className="mt-0.5" />
+                                  <span>
+                                      <strong>Unstoppable March of the Dead (L):</strong> Rules require all units in the
+                                      warband to be Undead. At least one unit is not marked as Undead.
+                                  </span>
+                              </div>
+                          )}
+                          {anyLeaderTraitsOnNonLeader && (
+                              <div className="flex items-start gap-2 text-amber-300">
+                                  <Icon name="warning" size={14} className="mt-0.5" />
+                                  <span>
+                                      Some Leader traits are on units that are not marked as the warband Leader. Only the actual Leader
+                                      should benefit from Leader traits in the game.
+                                  </span>
+                              </div>
+                          )}
+                      </div>
+                  ) : null}
+              </header>
+
+              <main className="max-w-6xl mx-auto px-4 py-4">
+                  <div className="grid gap-4 md:grid-cols-[minmax(0,260px),minmax(0,1fr)]">
+                      {/* Left panel: add units + JSON tools */}
+                      <aside className="no-print">
+                          <div className="bg-stone-900 border border-stone-700 rounded-lg p-4 shadow">
+                              <h2 className="text-lg font-semibold fantasy-font mb-3">Add unit</h2>
+                              <p className="text-xs text-stone-400 mb-2">
+                                  Choose a template and it will appear on the right.
+                              </p>
+                              <select
+                                  className="w-full bg-stone-800 text-stone-100 border border-stone-600 rounded px-2 py-2 text-sm mb-3 focus:outline-none focus:border-amber-500"
+                                  onChange={(e) => {
+                                      if (e.target.value) {
+                                          addUnit(e.target.value);
+                                          e.target.value = "";
+                                      }
+                                  }}
+                                  defaultValue=""
+                              >
+                                  <option value="" disabled>
+                                      Pick a unit type
+                                  </option>
+                                  {UNIT_TEMPLATES.map((t) => (
+                                      <option key={t.name} value={t.name}>
+                                          {t.name} ({t.cost} pts)
+                                      </option>
+                                  ))}
+                              </select>
+                              <p className="text-xs text-stone-500">
+                                  Tip: tick <strong>Leader</strong> on the unit that carries your Leader traits.
+                              </p>
+                          </div>
+
+                          {/* JSON export/import */}
+                          <div className="bg-stone-900 border border-stone-700 rounded-lg p-4 shadow mt-4">
+                              <h2 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                                  <Icon name="file-json" size={16} className="text-amber-300" />
+                                  Export / Import JSON
+                              </h2>
+                              <p className="text-[11px] text-stone-400 mb-2">
+                                  Click <strong>Export</strong> to generate JSON for this warband, then copy and save it somewhere.
+                                  Paste JSON back in and click <strong>Import</strong> to load it on another device.
+                              </p>
+                              <textarea
+                                  rows="6"
+                                  className="w-full bg-stone-950 border border-stone-700 rounded p-2 text-xs text-stone-100 mb-2 font-mono"
+                                  placeholder='Click "Export" to generate JSON here, or paste JSON then click "Import".'
+                                  value={jsonText}
+                                  onChange={(e) => setJsonText(e.target.value)}
+                              ></textarea>
+                              <div className="flex gap-2 justify-end">
+                                  <button
+                                      type="button"
+                                      onClick={handleExportJson}
+                                      className="px-3 py-1 rounded bg-stone-800 hover:bg-stone-700 text-xs flex items-center gap-1"
+                                  >
+                                      <Icon name="export" size={14} />
+                                      Export
+                                  </button>
+                                  <button
+                                      type="button"
+                                      onClick={handleImportJson}
+                                      className="px-3 py-1 rounded bg-emerald-800 hover:bg-emerald-700 text-xs flex items-center gap-1"
+                                  >
+                                      <Icon name="import" size={14} />
+                                      Import
+                                  </button>
+                              </div>
+                          </div>
+                      </aside>
+
+                      {/* Right panel: army list */}
+                      <section>
+                          <h2 className="sr-only">Army list</h2>
+                          {army.length === 0 ? (
+                              <div className="border border-dashed border-stone-700 rounded-lg p-8 text-center text-stone-400">
+                                  <p className="mb-2 text-sm">No units in this warband yet.</p>
+                                  <p className="text-xs">
+                                      Use the panel on the left to add your first unit.
+                                  </p>
+                              </div>
+                          ) : (
+                              <div className="space-y-4">
+                                  {army.map((unit) => (
+                                      <UnitCard
+                                          key={unit.id}
+                                          unit={unit}
+                                          onUpdate={updateUnit}
+                                          onDelete={deleteUnit}
+                                          onDuplicate={duplicateUnit}
+                                          onSetLeader={setLeader}
+                                      />
+                                  ))}
+                              </div>
+                          )}
+                      </section>
+                  </div>
+              </main>
+          </div>
+      );
+  };
+
+  ReactDOM.createRoot(document.getElementById('dr-army-builder-root')).render(<App />);
+</script>
